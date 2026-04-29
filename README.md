@@ -175,21 +175,6 @@ ros2 topic pub --once /youBot/arm_joint_1/position std_msgs/Float64 "data: 1.0"
 
 ---
 
-## Submission
-
-Push your completed code from your **host machine** (not inside the container):
-
-```bash
-git add src/
-git commit -m "Assignment 2 complete"
-git push origin main
-```
-
-Submit to Moodle:
-- GitHub repo link
-- PDF report with plots and answers to all task questions
-
----
 
 ## Troubleshooting
 
