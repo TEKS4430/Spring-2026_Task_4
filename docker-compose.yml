@@ -1,0 +1,73 @@
+# ============================================================
+# docker-compose.yml — Assignment 2: Arm Control
+# Webots runs natively on host | ROS2 runs in this container
+# ============================================================
+
+services:
+  ros2:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile
+    image: course-ros2-a2:jazzy
+
+    # amd64 ensures consistent ROS2 packages across all platforms.
+    # Mac Apple Silicon: Docker Desktop → Settings → General →
+    #   enable "Use Rosetta for x86/amd64 emulation"
+    platform: linux/amd64
+
+    # ── Volumes ─────────────────────────────────────────────
+    volumes:
+      - ./src:/ros2_ws/src
+      - ./worlds:/ros2_ws/worlds
+      - ros2_a2_build:/ros2_ws/build
+      - ros2_a2_install:/ros2_ws/install
+      - ros2_a2_log:/ros2_ws/log
+
+    # ── Environment ─────────────────────────────────────────
+    environment:
+      - RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+
+      # Container runs as root — set USER so webots_ros2_driver
+      # doesn't fall back to 'default' username, which breaks
+      # the controller connection handshake.
+      - USER=root
+
+      # Suppress the "install Webots?" prompt — container connects
+      # via TCP, it does not need a local Webots installation.
+      - WEBOTS_HOME=/opt/webots
+
+      # Critical: makes has_shared_folder() return true so
+      # controller_protocol() returns "tcp" instead of "ipc".
+      # Without this the driver silently fails to connect.
+      - WEBOTS_SHARED_FOLDER=/tmp
+
+      # Where Webots is running on your host OS.
+      # Linux:        localhost  (host network mode)
+      # Mac/Windows:  host.docker.internal
+      # Set WEBOTS_HOST in your .env file (see .env.example).
+      - WEBOTS_HOST=${WEBOTS_HOST:-host.docker.internal}
+
+      # TCP URL to reach the robot in the running Webots instance.
+      # ⚠️  'youBot' must exactly match the robot's `name` field
+      # in arm_assignment.wbt — check it if connection fails.
+      - WEBOTS_CONTROLLER_URL=tcp://${WEBOTS_HOST:-host.docker.internal}:1234/youBot
+
+    # ── Networking ──────────────────────────────────────────
+    # Linux:        host mode — container shares host network directly
+    # Mac/Windows:  bridge mode — host.docker.internal resolves to host
+    # Set NETWORK_MODE in your .env file.
+    network_mode: ${NETWORK_MODE:-bridge}
+
+    # Makes host.docker.internal resolve on Linux too,
+    # so the same config works across all platforms.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    stdin_open: true
+    tty: true
+
+# ── Named volumes ────────────────────────────────────────────
+volumes:
+  ros2_a2_build:
+  ros2_a2_install:
+  ros2_a2_log:

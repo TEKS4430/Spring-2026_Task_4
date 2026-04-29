@@ -1,0 +1,108 @@
+#VRML_SIM R2025a utf8
+
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackground.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/backgrounds/protos/TexturedBackgroundLight.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/floors/protos/RectangleArena.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/objects/tables/protos/Table.proto"
+EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/projects/robots/kuka/youbot/protos/Youbot.proto"
+
+WorldInfo {
+  info [
+    "Assignment 2 — Arm Control"
+    "TEKS4430 Engineering Autonomous Cyber-Physical Systems"
+    "youBot arm reaches a box on a table."
+  ]
+  title "Arm Control Assignment"
+}
+Viewpoint {
+  orientation 0.3115736014706057 0.2997391463006821 -0.9017085643607774 1.741395080204151
+  position 0.32478613152590163 5.766660669072564 4.734217820405348
+}
+TexturedBackground {
+}
+TexturedBackgroundLight {
+}
+RectangleArena {
+  floorSize 4 4
+  wallHeight 0.05
+}
+Youbot {
+  hidden position_0_0 -5.556753541870304e-08
+  hidden position_0_1 5.822693570457631e-08
+  hidden position_0_2 5.911993403454259e-08
+  hidden position_0_3 -6.177933134728847e-08
+  hidden linearVelocity_0 -2.4267130481623e-11 1.187544467313642e-11 -1.2635139073848625e-12
+  hidden angularVelocity_0 -1.1916373172834183e-10 -3.79577902859232e-10 1.7265072068721266e-09
+  hidden position_1_0 1.0000000170565868
+  hidden rotation_2 0 0 0.9999999999999999 1.0000000170565868
+  hidden position_2_0 1.0000058314551499
+  hidden linearVelocity_2 -1.1777237618679292e-10 2.959674152056785e-10 5.475553275315833e-11
+  hidden angularVelocity_2 -1.1892861764899872e-10 -3.7938609162081535e-10 1.7262661947326285e-09
+  hidden rotation_3 0 -1 0 1.0000058314551499
+  hidden position_3_0 2.3704717713152947e-06
+  hidden linearVelocity_3 -3.464879893365762e-11 3.168800143361185e-10 6.507194941777268e-11
+  hidden angularVelocity_3 -1.1869446799238384e-10 -3.7921879116984333e-10 1.7260447227438763e-09
+  hidden rotation_4 0 -1 0 2.3705494851285748e-06
+  hidden position_4_0 5.442427329627552e-07
+  hidden linearVelocity_4 6.098835394057989e-11 1.3851192784346346e-10 3.2466810096764195e-11
+  hidden angularVelocity_4 -1.1854573264275187e-10 -3.7900835107370857e-10 1.7258705655063035e-09
+  hidden rotation_5 0 -1 0 5.438413498072241e-07
+  hidden position_5_0 2.3959288735424134e-07
+  hidden linearVelocity_5 1.7977931700831168e-10 1.0216203630558833e-10 3.2645568203244686e-11
+  hidden angularVelocity_5 -1.1840854834814737e-10 -3.7879679432317587e-10 1.7257134883194278e-09
+  hidden rotation_6 0 0 1 2.40274004587488e-07
+  hidden position_6_0 0.02499999886913322
+  hidden position_6_1 0.025000001130867408
+  hidden linearVelocity_6 2.8177110128051383e-10 3.032104739207833e-11 2.387681339362149e-11
+  hidden angularVelocity_6 -1.0859498309497803e-06 -1.700655698004909e-06 1.2942049467568174e-06
+  hidden translation_7 0 0.02499999886913322 0.09
+  hidden linearVelocity_7 -2.4353135104302684e-08 -3.7986088354780274e-08 -7.060256369194803e-08
+  hidden angularVelocity_7 -1.0859498733201103e-06 -1.7006556471423776e-06 1.2942049253068248e-06
+  hidden translation_8 0 -0.025000001130867408 0.09
+  hidden linearVelocity_8 2.5051142830349273e-08 3.795221787412118e-08 7.063896159117131e-08
+  hidden angularVelocity_8 -1.085949788728086e-06 -1.7006557650878433e-06 1.2942049501497637e-06
+  hidden rotation_9 0 -0.9999999999999999 0 5.16191365590357e-08
+  hidden linearVelocity_9 -1.9064331429619052e-08 1.285336573533433e-10 1.0108003323239245e-10
+  hidden angularVelocity_9 -1.3566676863782967e-10 -5.551829969764309e-07 1.0545651264268123e-10
+  hidden rotation_10 0 0.9999999999999999 0 5.960464477539063e-08
+  hidden linearVelocity_10 1.9942644745923542e-08 1.2836250062875366e-10 6.41642117216179e-11
+  hidden angularVelocity_10 -1.297020409352988e-10 5.809765647879448e-07 3.414980573938892e-09
+  hidden rotation_11 0 0.9999999999999999 0 5.960464477539063e-08
+  hidden linearVelocity_11 2.0419941521212375e-08 -1.168824602149109e-10 -6.8592456159422e-11
+  hidden angularVelocity_11 -1.0251897144930404e-10 5.899095950935299e-07 3.4410017251571678e-09
+  hidden rotation_12 0 -1 0 5.960464477539063e-08
+  hidden linearVelocity_12 -2.1373063090303694e-08 -1.1662852144927928e-10 -1.0550316176249908e-10
+  hidden angularVelocity_12 -1.0887018580332841e-10 -6.172213424699586e-07 -7.525557535645828e-11
+  translation 0.0002780799086276589 -0.0003059485232156666 0.098875034929329
+  rotation 0.7338548841493103 0.6793061946467821 -0.00032081881274712676 0.003969312545753857
+  controller "<extern>"
+}
+Table {
+  translation 0.85 0 0
+  size 0.6 0.5 0.5
+}
+DEF TARGET_BOX Solid {
+  translation 0.85 3.751040616717955e-19 0.5299576197547647
+  rotation 0.29971570532692743 0.8991471159808037 -0.31891215060543776 9.146305549244735e-17
+  children [
+    Shape {
+      appearance Appearance {
+        material Material {
+          diffuseColor 1 0.2 0.2
+        }
+      }
+      geometry Box {
+        size 0.06 0.06 0.06
+      }
+    }
+  ]
+  name "target_box"
+  boundingObject Box {
+    size 0.06 0.06 0.06
+  }
+  physics Physics {
+    density 500
+  }
+  linearVelocity -6.446823563789971e-17 -5.806210091808283e-17 8.168054216534829e-09
+  angularVelocity 8.566535683836078e-16 -1.713307136767218e-15 -2.9859823610740455e-16
+}

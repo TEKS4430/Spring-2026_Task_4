@@ -1,0 +1,51 @@
+{
+  "name": "ROS2 Jazzy",
+
+  // Reference the docker-compose at the repo root
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "ros2",
+  "workspaceFolder": "/ros2_ws",
+
+  // ── VS Code extensions installed automatically ──────────
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // ROS2
+        "ms-iotcentral.vscode-ros",
+        // Python
+        "ms-python.python",
+        "ms-python.pylint",
+        "ms-python.black-formatter",
+        // C++
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools",
+        // Git
+        "eamodio.gitlens",
+        // Docker sidebar
+        "ms-azuretools.vscode-docker",
+        // General quality of life
+        "usernamehw.errorlens",
+        "streetsidesoftware.code-spell-checker",
+        "gruntfuggly.todo-tree"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "editor.formatOnSave": true,
+        "editor.tabSize": 4,
+        "files.trimTrailingWhitespace": true,
+        "ros.distro": "jazzy",
+        // Point C++ IntelliSense at ROS2 headers
+        "C_Cpp.default.includePath": [
+          "/opt/ros/jazzy/include/**",
+          "/ros2_ws/src/**"
+        ]
+      }
+    }
+  },
+
+  // Build workspace automatically when container starts
+  "postStartCommand": "cd /ros2_ws && colcon build --symlink-install 2>&1 | tail -5 || true",
+
+  "remoteUser": "root"
+}

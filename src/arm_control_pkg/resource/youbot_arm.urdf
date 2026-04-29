@@ -1,0 +1,84 @@
+<?xml version="1.0" ?>
+<!--
+  youbot_arm.urdf — minimal URDF for webots_ros2_driver
+  Joint limits taken directly from Youbot.proto.
+  The <webots><plugin> tag loads our Python driver.
+-->
+<robot name="youBot_arm">
+
+  <link name="base_link"/>
+
+  <joint name="arm_joint_1" type="revolute">
+    <parent link="base_link"/>
+    <child  link="arm_link_1"/>
+    <origin xyz="0.156 0 0.077" rpy="0 0 0"/>
+    <axis   xyz="0 0 1"/>
+    <limit  lower="-2.9496" upper="2.9496" effort="9.5" velocity="1.5708"/>
+  </joint>
+  <link name="arm_link_1"/>
+
+  <joint name="arm_joint_2" type="revolute">
+    <parent link="arm_link_1"/>
+    <child  link="arm_link_2"/>
+    <origin xyz="0.033 0 0.07" rpy="0 0 0"/>
+    <axis   xyz="0 -1 0"/>
+    <limit  lower="-1.13446" upper="1.5708" effort="9.5" velocity="1.5708"/>
+  </joint>
+  <link name="arm_link_2"/>
+
+  <joint name="arm_joint_3" type="revolute">
+    <parent link="arm_link_2"/>
+    <child  link="arm_link_3"/>
+    <origin xyz="0 0 0.155" rpy="0 0 0"/>
+    <axis   xyz="0 -1 0"/>
+    <limit  lower="-2.63545" upper="2.54818" effort="6.0" velocity="1.5708"/>
+  </joint>
+  <link name="arm_link_3"/>
+
+  <joint name="arm_joint_4" type="revolute">
+    <parent link="arm_link_3"/>
+    <child  link="arm_link_4"/>
+    <origin xyz="0 0 0.135" rpy="0 0 0"/>
+    <axis   xyz="0 -1 0"/>
+    <limit  lower="-1.78024" upper="1.78024" effort="2.0" velocity="1.5708"/>
+  </joint>
+  <link name="arm_link_4"/>
+
+  <joint name="arm_joint_5" type="revolute">
+    <parent link="arm_link_4"/>
+    <child  link="arm_link_5"/>
+    <origin xyz="0 0 0.081" rpy="0 0 0"/>
+    <axis   xyz="0 0 1"/>
+    <limit  lower="-2.92343" upper="2.92343" effort="1.0" velocity="1.5708"/>
+  </joint>
+  <link name="arm_link_5"/>
+
+  <joint name="end_effector_joint" type="fixed">
+    <parent link="arm_link_5"/>
+    <child  link="end_effector"/>
+    <origin xyz="0 0 0.09" rpy="0 0 0"/>
+  </joint>
+  <link name="end_effector"/>
+
+  <joint name="finger_left_joint" type="prismatic">
+    <parent link="end_effector"/>
+    <child  link="finger_left"/>
+    <axis   xyz="0 1 0"/>
+    <limit  lower="0.0" upper="0.025" effort="100" velocity="0.1"/>
+  </joint>
+  <link name="finger_left"/>
+
+  <joint name="finger_right_joint" type="prismatic">
+    <parent link="end_effector"/>
+    <child  link="finger_right"/>
+    <axis   xyz="0 -1 0"/>
+    <limit  lower="0.0" upper="0.025" effort="100" velocity="0.1"/>
+  </joint>
+  <link name="finger_right"/>
+
+  <!-- Load our Python driver via webots_ros2_driver plugin system -->
+  <webots>
+    <plugin type="arm_control_pkg.youbot_arm_driver.YouBotArmDriver"/>
+  </webots>
+
+</robot>
