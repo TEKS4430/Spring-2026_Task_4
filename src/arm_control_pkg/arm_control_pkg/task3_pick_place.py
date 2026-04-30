@@ -52,7 +52,7 @@ STATE_ANGLES = {
 }
 STATE_SEQUENCE = ["HOME", "APPROACH", "GRASP", "CLOSE_GRIP", "LIFT"]
 
-GRIPPER_OPEN = 0.025
+GRIPPER_OPEN = 0.0245
 GRIPPER_CLOSE = 0.002
 # ────────────────────────────────────────────────────────────────────
 

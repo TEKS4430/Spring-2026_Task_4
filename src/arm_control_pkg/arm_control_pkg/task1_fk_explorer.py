@@ -94,8 +94,8 @@ def main(args=None):
     rclpy.init(args=args)
 
     # ── EDIT THESE for each experiment ──────────────────────────────
-    joint_index = 1  # which joint to move (1–5)
-    target_angle = 1.0  # target angle in radians
+    joint_index = 2  # which joint to move (1–5)
+    target_angle = 0.5  # target angle in radians
     # ────────────────────────────────────────────────────────────────
 
     node = FKExplorer(joint_index, target_angle)

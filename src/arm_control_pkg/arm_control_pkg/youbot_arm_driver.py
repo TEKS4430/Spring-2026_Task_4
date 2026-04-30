@@ -28,7 +28,7 @@ JOINT_LIMITS = [
     (-1.78024, 1.78024),  # arm4 — wrist pitch
     (-2.92343, 2.92343),  # arm5 — wrist roll
 ]
-GRIPPER_LIMIT = (0.0, 0.025)
+GRIPPER_LIMIT = (0.0, 0.0245)
 
 # Device names exactly as defined in Youbot.proto
 ARM_MOTOR_NAMES = ["arm1", "arm2", "arm3", "arm4", "arm5"]
