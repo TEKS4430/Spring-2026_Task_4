@@ -1,257 +1,275 @@
-# Assignment 2 — Arm Control
+# Assignment 4 — Arm Control
 ### TEKS4430 Engineering Autonomous Cyber-Physical Systems
- 
+
 > **Webots R2025a** runs on your host OS.  
 > **ROS2 Jazzy** runs inside Docker.  
 > Your code lives in `src/` — edit on host, build and run in container.
- 
+
 ---
- 
+
 ## Quick start
- 
+
 ### 1. First-time setup
- 
+
 ```bash
-# Copy environment config for your OS
 cp .env.example .env
 # Linux:        uncomment NETWORK_MODE=host and WEBOTS_HOST=localhost
-# Mac/Windows:  leave as-is (bridge mode is the default)
- 
-# Build the Docker image (takes ~5 min first time)
-docker compose build
+# Mac/Windows:  leave as-is
+
+docker compose build   # ~5 min first time
 ```
- 
-### 2. Open Webots on your host
- 
-1. Download Webots R2025a from https://cyberbotics.com if not installed
-2. Open Webots → **File → Open World** → navigate to `worlds/arm_assignment.wbt`
-3. Press **Play ▶** — the simulation must be running before launching the driver
-> ⚠️ **Always press Play in Webots before running the driver.**  
-> If you launch the driver first, it will print:  
-> `"The specified robot is not in the list of robots with <extern> controllers, retrying..."`  
-> This is normal — just press Play and it connects automatically within seconds.
- 
-### 3. Enter the container
- 
+
+### 2. Open Webots
+
+1. Open Webots R2025a → **File → Open World** → `worlds/arm_assignment.wbt`
+2. Press **Play ▶** before launching the driver
+
+> ⚠️ If you see `"retrying for another 50 seconds..."` — just press Play in Webots.  
+> The driver reconnects automatically.
+
+### 3. Start the container and build
+
 ```bash
 docker compose run --rm ros2 bash
+cb && src
 ```
- 
-Inside the container you have these aliases:
- 
-| Alias | Command |
-|-------|---------|
+
+| Alias | What it does |
+|-------|-------------|
 | `cb`  | `colcon build --symlink-install` |
-| `cbs` | `colcon build --packages-select <pkg>` |
 | `src` | `source install/setup.bash` |
 | `rt`  | `ros2 topic list` |
-| `rn`  | `ros2 node list` |
- 
-### 4. Build the package
- 
+
+### 4. Start the driver (always Terminal 1)
+
 ```bash
-cb && src
-```
- 
----
- 
-## Running the tasks
- 
-> ⚠️ **The driver must be running in Terminal 1 for all tasks.**  
-> Sensor topics only exist while the driver is alive.  
-> If `angle=0.000` never changes, the driver is not running.
- 
----
- 
-### Task 1 — Forward Kinematics
- 
-```bash
-# Terminal 1 — start the driver (keep this open the whole session)
 ros2 launch arm_control_pkg arm.launch.py
- 
-# Terminal 2 — run the FK explorer
-ros2 run arm_control_pkg task1_fk
 ```
- 
-Edit `joint_index` and `target_angle` at the bottom of `task1_fk_explorer.py`,
-rebuild, and run again for each experiment:
- 
-```bash
-# After editing the file on your host:
-cb && src
-ros2 run arm_control_pkg task1_fk
+
+Confirm the driver loaded — you should see:
 ```
- 
-**Expected output:**
+[YouBotArmDriver] Driver ready — all topics live
 ```
-[fk_explorer]: Start EE:   x=0.4610  y=0.0000  z=0.1470
-[fk_explorer]: Command sent: joint 1 → 1.000 rad
-[fk_explorer]: Current EE: x=0.2491  y=0.3879  z=0.1470
-```
- 
-Wait until the EE values stop changing before recording them in your table.
- 
----
- 
-### Task 2 — PID Controller (Sine Wave Tracking)
- 
-Joint 2 follows a continuously moving sine wave target. Your controller
-must keep the arm tracking it. Watch the arm move in Webots as you add
-each PID term — the tracking improves visibly with each step.
- 
-Run one experiment at a time: **P only → PD → PID**.
- 
-For each run open three terminals:
- 
-```bash
-# Terminal 1 — Webots driver (keep open across all runs)
-ros2 launch arm_control_pkg arm.launch.py
- 
-# Terminal 2 — your PID controller
-ros2 run arm_control_pkg task2_pid
- 
-# Terminal 3 — data logger
-ros2 run arm_control_pkg data_logger --ros-args -p label:=P_only
-```
- 
-Let it run for **~15 seconds** (about 3 full sine cycles), then stop
-Terminal 2 and Terminal 3 with Ctrl+C. Change `label` for each run:
- 
-| Run | Label |
-|-----|-------|
-| P only | `P_only` |
-| P + D  | `PD` |
-| P + I + D | `PID` |
- 
-After all three runs, generate the plot **inside the container**:
- 
-```bash
-ros2 run arm_control_pkg plotter
-```
- 
-Then **open the plot on your host machine** — no GUI needed in Docker:
-```
-src/arm_control_pkg/logs/task2_plot.png
-```
-The `src/` folder is shared between the container and your host, so the
-file appears there immediately after the plotter runs.
- 
-**Expected log output (every 2 seconds):**
-```
-[pid_joint_controller]: target=0.650  angle=0.412  error=0.238  correction=0.000
-```
-The `error` value should shrink as you add terms. With a well-tuned PID,
-error stays close to zero even as the target keeps moving.
- 
----
- 
-### Task 3 — Pick and Place State Machine
- 
-```bash
-# Terminal 1 — Webots driver
-ros2 launch arm_control_pkg arm.launch.py
- 
-# Terminal 2 — state machine
-ros2 run arm_control_pkg task3_pick
-```
- 
-Run **twice** by editing `DWELL_TIME` at the top of `task3_pick_place.py`:
- 
-| Run | Setting | What to observe |
-|-----|---------|-----------------|
-| 1 | `DWELL_TIME = 0.0` | Arm skips states mid-motion |
-| 2 | `DWELL_TIME = 1.5` | Arm completes each state smoothly |
- 
-Rebuild between runs:
-```bash
-cb && src
-ros2 run arm_control_pkg task3_pick
-```
- 
----
- 
-## Verifying the full setup
- 
-After `ros2 launch arm_control_pkg arm.launch.py`, check all arm topics
-are live in a second terminal:
- 
+
+Then check topics in a second terminal:
 ```bash
 rt | grep youBot
 ```
- 
-Expected:
-```
-/youBot/arm_joint_1/position    /youBot/arm_joint_1/sensor
-/youBot/arm_joint_2/position    /youBot/arm_joint_2/sensor
-/youBot/arm_joint_3/position    /youBot/arm_joint_3/sensor
-/youBot/arm_joint_4/position    /youBot/arm_joint_4/sensor
-/youBot/arm_joint_5/position    /youBot/arm_joint_5/sensor
-/youBot/end_effector_position
-/youBot/gripper_left/position
-/youBot/gripper_right/position
-```
- 
-Test a live command — the arm should visibly rotate in Webots:
-```bash
-ros2 topic pub --once /youBot/arm_joint_1/position std_msgs/Float64 "data: 1.0"
-```
- 
+
+You should see `/youBot/arm_joint_1/sensor` through `arm_joint_5/sensor` and `/youBot/end_effector_position`. If you see nothing, the driver is not running.
+
 ---
- 
-## Submission
- 
-Push your completed code from your **host machine** (not inside the container):
- 
+
+## Task 1 — Forward Kinematics
+
+**Learning goal:** Understand how joint angles map to end-effector position.
+
 ```bash
-git add src/
-git commit -m "Assignment 2 complete"
-git push origin main
+# Terminal 1 — driver (keep open for all tasks)
+ros2 launch arm_control_pkg arm.launch.py
+
+# Terminal 2 — FK explorer
+ros2 run arm_control_pkg task1_fk
 ```
- 
-Submit to Moodle:
-- GitHub repo link
-- PDF report with plots and answers to all task questions
+
+Edit `joint_index` and `target_angle` at the bottom of `task1_fk_explorer.py`, then rebuild and run again for each experiment:
+
+```bash
+# After editing on your host:
+cb && src
+ros2 run arm_control_pkg task1_fk
+```
+
+### What to record
+
+Fill in this table in your report (run the node once per row):
+
+| Joint | Start (rad) | End (rad) | EE start (x, y, z) | EE end (x, y, z) |
+|-------|-------------|-----------|---------------------|------------------|
+| 1 | 0.0 | 1.0 | | |
+| 1 | 0.0 | 2.0 | | |
+| 2 | 0.0 | 0.5 | | |
+| 2 | 0.0 | 1.0 | | |
+| 3 | 0.0 | -1.0 | | |
+| 4 | 0.0 | 1.0 | | |
+
+### Hints
+
+- **Wait for values to stop changing** before recording — the arm takes 1–2 seconds to settle after a command.
+- **What the axes mean:** `x` is forward (away from the robot body), `y` is sideways, `z` is up. All values are relative to the arm's base joint.
+- **Which joints do what:** Joint 1 rotates the base (changes x and y, z stays the same). Joints 2 and 3 control how far forward and how high the arm reaches. Joints 4 and 5 control wrist angle.
+- **The workspace question (Task 1b):** Think about what the arm is physically attached to, and what that means about positions directly below or behind it.
+
 ---
- 
+
+## Task 2 — PID Controller (Sine Wave Tracking)
+
+**Learning goal:** Implement and tune a PID controller. Observe how each term affects tracking.
+
+Joint 2 follows a continuously moving sine wave target. Your controller must keep the arm tracking it. Watch the arm in Webots — tracking visibly improves with each term you add.
+
+### Workflow — one run at a time
+
+```bash
+# Terminal 1 — driver (keep open across all runs)
+ros2 launch arm_control_pkg arm.launch.py
+
+# Terminal 2 — your PID controller
+ros2 run arm_control_pkg task2_pid
+
+# Terminal 3 — data logger (saves plot automatically on Ctrl+C)
+ros2 run arm_control_pkg data_logger --ros-args -p label:=P_only
+```
+
+Run for ~60 seconds (3 full cycles), then Ctrl+C both Terminal 2 and Terminal 3.
+
+Repeat with labels `PD` and `PID`. When you stop the logger it automatically saves the comparison plot to:
+```
+src/arm_control_pkg/logs/task2_plot.png
+```
+Open that file directly on your host machine — no display needed in Docker.
+
+### What to implement
+
+Open `task2_pid_joint.py` and find the TODO section in `_control_loop`. Implement in order:
+
+**Task 2a — P term only** (`Ki=0, Kd=0`):
+```python
+correction = Kp * error
+```
+The arm will start following the sine wave but lag behind the target.
+
+**Task 2b — Add D term** (keep your Kp):
+```python
+derivative = (error - self.prev_error) / self.dt
+correction = Kp * error + Kd * derivative
+```
+The lag should reduce. Watch the arm in Webots become more responsive.
+
+**Task 2c — Add I term** (keep your Kp and Kd):
+```python
+self.integral += error * self.dt
+correction = Kp * error + Kd * derivative + Ki * self.integral
+```
+Any remaining constant offset between arm and target should disappear.
+
+### Hints
+
+- **With `correction = 0.0`** (before you implement anything), the arm sends `target + 0 = target` — it will move, but it is not using any feedback. The error will be non-zero and visible in the log. This is expected.
+- **Starting gain values:** `Kp = 1.0` is a good starting point. If the arm barely moves, increase it. If it oscillates wildly, decrease it.
+- **Keep Kd small** (0.01–0.05). The D term amplifies sensor noise — too large and the arm will vibrate rather than dampen.
+- **Keep Ki small** (0.01–0.1). The I term accumulates over time — too large causes slow growing oscillations.
+- **Each run must be independent** — stop Terminal 2 (controller) and Terminal 3 (logger) with Ctrl+C before starting the next run. Use a different `label` each time so the plot shows all three curves.
+
+---
+
+## Task 3 — Pick and Place State Machine
+
+**Learning goal:** Implement a discrete state machine and observe the gap between discrete decisions and continuous arm dynamics.
+
+The arm must complete this sequence:
+```
+HOME → APPROACH → GRASP → CLOSE_GRIP → LIFT
+```
+
+```bash
+# Terminal 1 — driver
+ros2 launch arm_control_pkg arm.launch.py
+
+# Terminal 2 — state machine
+ros2 run arm_control_pkg task3_pick
+```
+
+### What to implement
+
+Open `task3_pick_place.py` and implement the two methods:
+
+**`_send_joint_commands(state)`** — publish target angles to all 5 joints:
+```python
+for i in range(5):
+    msg = Float64()
+    msg.data = STATE_ANGLES[state][i]
+    self.joint_pubs[i].publish(msg)
+```
+
+**`_check_transition(state)`** — return `True` only when safe to advance:
+```python
+# Condition 1: all joints close enough to target
+all_close = all(
+    abs(self.current_angles[i] - STATE_ANGLES[state][i]) < POSITION_THRESHOLD
+    for i in range(5)
+)
+# Condition 2: arm has held that position for DWELL_TIME seconds
+if all_close:
+    if self.dwell_start is None:
+        self.dwell_start = time.time()
+    return time.time() - self.dwell_start >= DWELL_TIME
+else:
+    self.dwell_start = None
+    return False
+```
+
+### Run it twice
+
+Edit `DWELL_TIME` at the top of the file:
+
+| Run | Setting | Expected behaviour |
+|-----|---------|-------------------|
+| 1 | `DWELL_TIME = 0.0` | Arm skips states before finishing motion |
+| 2 | `DWELL_TIME = 1.5` | Each state completes before the next begins |
+
+Rebuild between runs: `cb && src`
+
+### Adjusting STATE_ANGLES for your setup
+
+The provided `STATE_ANGLES` are approximate. **The arm may not reach the box exactly** — this is normal and part of the task. To improve the arm's reach:
+
+1. **Use Task 1's FK explorer** to find angles that position the EE near your box:
+   - Run `task1_fk` with different joint angles
+   - Look at the EE `x` and `z` values — aim to match the box position visually
+   - Joint 2 (shoulder, `arm_joint_2`) primarily controls height (z)
+   - Joint 3 (elbow, `arm_joint_3`) primarily controls forward reach (x) — use negative values to extend forward
+   - Joint 4 (wrist, `arm_joint_4`) fine-tunes the approach angle
+
+2. **Update `STATE_ANGLES`** in `task3_pick_place.py` with your found angles:
+   - `APPROACH` should position the EE a few centimetres **above** the box
+   - `GRASP` should position the EE at the box level
+   - `LIFT` should raise the arm back up
+
+3. **You can also move the box** in the Webots Scene Tree to a position that's easier to reach — click the TARGET_BOX node, change its `translation` field.
+
+> The arm's maximum forward reach is approximately **0.46 m** from its base joint (which is offset ~0.16 m from the robot centre). The box must be within this range.
+
+---
+
+
+
 ## Troubleshooting
- 
-**`ros2 topic list` shows no `/youBot/...` topics**  
-→ The driver is not running. Start it with `ros2 launch arm_control_pkg arm.launch.py`.  
-→ Also check Webots is open, the world is loaded, and simulation is playing ▶.
- 
+
+**No `/youBot/...` topics after launch**  
+→ Driver not loaded. Check Webots is open and simulation is playing ▶.
+
 **`angle=0.000` never changes in task2**  
-→ The driver is not running in a separate terminal. You need Terminal 1 (driver)
-and Terminal 2 (task) open simultaneously.
- 
-**`retrying for another 50 seconds...` in launch output**  
-→ Normal. Webots was not playing when the driver started.
-Press Play ▶ in Webots — the driver connects automatically.
- 
+→ Driver must be running in a separate terminal. `task2_pid` alone does nothing — it needs the driver running in Terminal 1 simultaneously.
+
+**Arm doesn't move in Task 3 / stuck on HOME forever**  
+→ `_send_joint_commands` is not implemented yet (it's `pass`). Implement it first — without it, no commands are published and the arm never moves.
+
 **Segmentation fault when stopping the driver (Ctrl+C)**  
-→ Known bug in `webots_ros2_driver`, not caused by your code.
-The driver shuts down correctly. Safe to ignore.
- 
-**`rcl_shutdown already called` error on Ctrl+C**  
-→ Cosmetic only. ROS2 cleans up before the `finally` block runs. Safe to ignore.
- 
-**`colcon: command not found`**  
-→ Run `source /opt/ros/jazzy/setup.bash` then retry.
- 
+→ Known bug in `webots_ros2_driver`. Safe to ignore — driver shuts down correctly.
+
+**`rcl_shutdown already called` on Ctrl+C**  
+→ Cosmetic only. Safe to ignore.
+
+**Changes not taking effect**  
+→ Run `cb && src` after every edit. Always rebuild before testing.
+
 **Container can't connect to Webots (Mac/Windows)**  
 → Check `.env` has `WEBOTS_HOST=host.docker.internal`.
- 
+
 **Mac Apple Silicon — build fails**  
-→ Docker Desktop → Settings → General →
-enable **"Use Rosetta for x86/amd64 emulation"**.
- 
-**Changes to task files not taking effect**  
-→ Run `cb && src` after every edit.
-With `--symlink-install` Python files don't need a full rebuild,
-but re-sourcing is still required.
- 
-**Plot file not appearing on host**  
-→ Check the logger actually ran and saved a CSV first:
-`ls src/arm_control_pkg/logs/`  
-→ If the folder is empty, the data_logger was not running while task2_pid ran.
- 
+→ Docker Desktop → Settings → General → enable "Use Rosetta for x86/amd64 emulation".
+
 ---
+
+*ROS2 Jazzy · Webots R2025a · Docker*

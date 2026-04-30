@@ -55,7 +55,7 @@ from std_msgs.msg import Float64
 
 # ── Sine wave target parameters — do not change ──────────────────────
 AMPLITUDE = 0.3  # radians — how far the target swings each side
-FREQUENCY = 0.2  # Hz     — one full cycle every 5 seconds
+FREQUENCY = 0.05  # Hz     — one full cycle every 20 seconds
 OFFSET = 0.5  # radians — centre position (arm2 mid-range)
 # ─────────────────────────────────────────────────────────────────────
 
@@ -65,7 +65,7 @@ Kd = 0.0  # Task 2b: add after Kp is working
 Ki = 0.0  # Task 2c: add last
 # ─────────────────────────────────────────────────────────────────────
 
-CONTROL_RATE = 50  # Hz — do not change
+CONTROL_RATE = 10  # Hz — do not change
 
 
 class PIDJointController(Node):
