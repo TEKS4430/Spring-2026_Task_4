@@ -5,6 +5,9 @@
 
 ### Overview
 
+This assignment implements a controlling pipeline for commanding robot arm. 
+
+Setup is familiar from previous assignments:
 > **Webots R2025a** runs on your host OS.  
 > **ROS2 Jazzy** runs inside Docker.  
 > Your code lives in `src/` — edit on host, build and run in container.
