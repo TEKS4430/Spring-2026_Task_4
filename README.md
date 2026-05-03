@@ -5,7 +5,7 @@
 
 ### Overview
 
-This assignment implements a controlling pipeline for commanding robot arm. 
+This assignment focuses on how autonomous cyber-physical systems execute actions in the physical world through control and actuation. Students implement a control pipeline for a robotic arm in a Webots and ROS 2 environment, exploring how discrete commands are translated into continuous motion. The task covers forward kinematics, PID control for trajectory tracking, and a state-machine-based pick-and-place behavior, highlighting the interaction between modeling, control, and physical constraints. Through this, students gain practical understanding of how perception and decision-making are realized as stable, controlled physical actions.
 
 Setup is familiar from previous assignments:
 > **Webots R2025a** runs on your host OS.  
