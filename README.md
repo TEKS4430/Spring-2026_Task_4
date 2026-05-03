@@ -1,5 +1,9 @@
-# Assignment 4 — Arm Control
-### TEKS4430 Engineering Autonomous Cyber-Physical Systems
+# Spring-2026 Task 4 — Arm Control
+
+## Part A
+
+
+### Overview
 
 > **Webots R2025a** runs on your host OS.  
 > **ROS2 Jazzy** runs inside Docker.  
@@ -270,6 +274,29 @@ The provided `STATE_ANGLES` are approximate. **The arm may not reach the box exa
 **Mac Apple Silicon — build fails**  
 → Docker Desktop → Settings → General → enable "Use Rosetta for x86/amd64 emulation".
 
+
+
+## Part B: Use of AI tools and self-reflection
+
+In part B, you will reflect on the new skills you have learned and analyze your own work and learning process. You will consider what technical skills you learned while completing part A, what tools you used, why you chose to use them, and what benefits or challenges were associated with their use.
+
+Include insight on:
+- What kind of challenges did you encounter while doing the assignment.
+- What did you learn while doing the assignment.
+- Which tools you used and for what purpose.
+- Any prompts that were particularly helpful.
+- Cases where the AI was wrong or misleading, and how you detected that.
+
+[See more detailed instructions from Task 2](https://github.com/TEKS4430/Spring-2026_Task_2/tree/main#part-b-use-of-ai-tools-and-self-reflection)
+
 ---
 
-*ROS2 Jazzy · Webots R2025a · Docker*
+## Returning instructions
+
+Create a video covering Parts A and B:
+- Demonstrate the environment running (Webots + ROS 2 launch).
+- Show the robot navigating waypoints and stopping for an obstacle.
+- Explain how you used AI in the assignment.
+
+[See more detailed instructions from Task 2](https://github.com/TEKS4430/Spring-2026_Task_2/tree/main#returning-instructions)
+
