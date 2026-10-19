@@ -13,6 +13,9 @@ When you press Ctrl+C:
   - CSV is saved to  src/arm_control_pkg/logs/<label>_<timestamp>.csv
   - Plot PNG is saved to  src/arm_control_pkg/logs/task2_plot.png
   - Open the PNG on your host machine to view the comparison
+
+The plot includes EVERY CSV in logs/. Delete old CSVs before a new
+tuning session:  rm -f /ros2_ws/src/arm_control_pkg/logs/*.csv
 """
 
 import rclpy
@@ -25,8 +28,8 @@ import glob
 import matplotlib
 
 matplotlib.use("Agg")  # no display needed — saves to file only
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.gridspec as gridspec  # noqa: E402
 
 LOG_DIR = "/ros2_ws/src/arm_control_pkg/logs"
 
@@ -81,7 +84,8 @@ class DataLogger(Node):
         labels, rms_values = [], []
 
         for filepath in files:
-            label = os.path.basename(filepath).split("_")[0]
+            # "P_only_1714740000.csv" -> "P_only"
+            label = os.path.basename(filepath).rsplit("_", 1)[0]
             times, errors = [], []
             with open(filepath) as f:
                 reader = csv.DictReader(f)
@@ -106,7 +110,8 @@ class DataLogger(Node):
         ax_err.legend()
         ax_err.grid(True, alpha=0.3)
 
-        colors = ["#e74c3c", "#e67e22", "#2ecc71", "#3498db", "#9b59b6"][: len(labels)]
+        colors = ["#e74c3c", "#e67e22", "#2ecc71", "#3498db", "#9b59b6"]
+        colors = [colors[i % len(colors)] for i in range(len(labels))]
         ax_rms.bar(labels, rms_values, color=colors, edgecolor="black", linewidth=0.8)
         ax_rms.set_ylabel("RMS error (rad)")
         ax_rms.set_title("Tracking quality\n(lower = better)")

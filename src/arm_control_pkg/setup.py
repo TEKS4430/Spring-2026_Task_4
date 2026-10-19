@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="Student",
     maintainer_email="student@example.com",
-    description="TEKS4430 Assignment 2 — Arm Control",
+    description="TEKS4430 Assignment 4 — Arm Control",
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
@@ -28,8 +28,6 @@ setup(
             "task3_pick   = arm_control_pkg.task3_pick_place:main",
             "data_logger  = arm_control_pkg.data_logger:main",
             "plotter      = arm_control_pkg.plotter:main",
-            "task2_solution = arm_control_pkg.task2_solution:main",
-            "task3_solution   = arm_control_pkg.task3_solution:main",
         ],
         "webots_ros2": [
             "youbot_arm_driver = arm_control_pkg.youbot_arm_driver:YouBotArmDriver",

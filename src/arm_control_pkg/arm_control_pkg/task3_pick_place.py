@@ -1,7 +1,7 @@
 """
 Task 3 — Pick and Place State Machine
 =======================================
-TEKS4430 Assignment 2
+TEKS4430 Assignment 4
 
 The arm moves through 5 states:
   HOME → APPROACH → GRASP → CLOSE_GRIP → LIFT
@@ -18,8 +18,13 @@ YOUR TASKS:
        errors < POSITION_THRESHOLD AND arm has held for DWELL_TIME s.
 
   3c — Run twice:
-       Run 1: DWELL_TIME = 0.0  → observe state skipping
-       Run 2: DWELL_TIME = 1.5  → observe smooth sequence
+       Run 1: DWELL_TIME = 0.0  → the arm advances the moment it is
+              within POSITION_THRESHOLD, before it has stopped moving.
+              GRASP and CLOSE_GRIP have the same angles, so CLOSE_GRIP
+              passes instantly and the arm lifts before the gripper
+              has closed — the box is left behind.
+       Run 2: DWELL_TIME = 1.5  → each state settles, the gripper closes,
+              and the box is lifted.
        Explain the difference using the lecture's
        "discrete decisions vs continuous dynamics" concept.
 ----------------------------------------------------------------------
@@ -28,34 +33,40 @@ YOUR TASKS:
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float64
-import time
+import time  # noqa: F401 — you need it in _check_transition()
 
 
 # ── Configuration ────────────────────────────────────────────────────
-POSITION_THRESHOLD = 0.05   # rad — "close enough" to advance state
+POSITION_THRESHOLD = 0.05  # rad — "close enough" to advance state
 
 # Task 3c: change to 1.5 for Run 2
 DWELL_TIME = 0.0
 
-# Pre-calculated joint angles [arm1, arm2, arm3, arm4, arm5]
-# Box is at world x=0.48, z=0.43. Arm base at x≈0.156, z≈0.30.
-# Verified against FK: GRASP reaches approx (0.505, 0, 0.48)
-# Pre-calculated joint angles [arm1, arm2, arm3, arm4, arm5]
-# Box is at world (0.451, 0, 0.41). Arm base at x≈0.156, z≈0.240.
-# FK verification:
-#   APPROACH → world (0.487, 0.472) — 6cm above box
-#   GRASP    → world (0.446, 0.417) — within 6mm of box centre
-#   LIFT     → world (0.570, 0.498) — raised clear of table
+# Joint angles [arm1, arm2, arm3, arm4, arm5] for each state.
+# Remember: 0 rad = arm straight up; NEGATIVE arm2/arm3/arm4 lean the arm
+# FORWARD (towards the table), positive leans it backward.
+#
+# Box (4 cm cube) is at world (0.451, 0, 0.41); table top is at z = 0.39.
+# Arm base frame is at world (0.156, 0, 0.099). The box is too high and
+# too far for a straight-down grasp, so the gripper approaches at an
+# angle (~30° below horizontal).
+# Finger-frame positions from kinematics.py (world x, z):
+#   HOME     → (0.189, 0.707)  arm straight up
+#   APPROACH → (0.401, 0.452)  ~6 cm back from the box along the gripper
+#   GRASP    → (0.451, 0.420)  at the box
+#   LIFT     → (0.450, 0.530)  ~11 cm above the grasp point
+# These are starting values — fine-tune them with Task 1 if the gripper
+# misses the box in Webots.
 STATE_ANGLES = {
-    'HOME':       [ 0.00,  0.00,  0.00,  0.00,  0.00],
-    'APPROACH':   [ 0.00,  1.30, -1.80,  0.50,  0.00],
-    'GRASP':      [ 0.00,  1.40, -2.20,  0.65,  0.00],
-    'CLOSE_GRIP': [ 0.00,  1.40, -2.20,  0.65,  0.00],
-    'LIFT':       [ 0.00,  0.80, -0.80,  0.00,  0.00],
+    "HOME": [0.00, 0.00, 0.00, 0.00, 0.00],
+    "APPROACH": [0.00, -0.15, -0.12, -1.77, 0.00],
+    "GRASP": [0.00, -0.35, -0.14, -1.64, 0.00],
+    "CLOSE_GRIP": [0.00, -0.35, -0.14, -1.64, 0.00],
+    "LIFT": [0.00, -0.28, -0.08, -1.16, 0.00],
 }
-STATE_SEQUENCE = ['HOME', 'APPROACH', 'GRASP', 'CLOSE_GRIP', 'LIFT']
+STATE_SEQUENCE = ["HOME", "APPROACH", "GRASP", "CLOSE_GRIP", "LIFT"]
 
-GRIPPER_OPEN  = 0.0245
+GRIPPER_OPEN = 0.0245
 GRIPPER_CLOSE = 0.002
 # ────────────────────────────────────────────────────────────────────
 
@@ -65,8 +76,8 @@ class PickAndPlace(Node):
     def __init__(self):
         super().__init__('pick_and_place')
 
-        self.state_index    = 0
-        self.dwell_start    = None
+        self.state_index = 0
+        self.dwell_start = None
         self.current_angles = [0.0] * 5
 
         self.joint_pubs = [
@@ -74,7 +85,7 @@ class PickAndPlace(Node):
             for i in range(1, 6)
         ]
 
-        self.grip_left_pub  = self.create_publisher(
+        self.grip_left_pub = self.create_publisher(
             Float64, '/youBot/gripper_left/position', 10)
         self.grip_right_pub = self.create_publisher(
             Float64, '/youBot/gripper_right/position', 10)
@@ -141,7 +152,7 @@ class PickAndPlace(Node):
     # ── Provided: gripper ────────────────────────────────────────────
 
     def _handle_gripper(self, state):
-        pos = GRIPPER_CLOSE if state == 'CLOSE_GRIP' else GRIPPER_OPEN
+        pos = GRIPPER_CLOSE if state == "CLOSE_GRIP" else GRIPPER_OPEN
         msg = Float64()
         msg.data = pos
         self.grip_left_pub.publish(msg)

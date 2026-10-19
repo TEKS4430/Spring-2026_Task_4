@@ -8,7 +8,7 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2025a/project
 
 WorldInfo {
   info [
-    "Assignment 2 — Arm Control"
+    "Assignment 4 — Arm Control"
     "TEKS4430 Engineering Autonomous Cyber-Physical Systems"
     "youBot arm reaches a box on a table."
   ]
@@ -93,8 +93,7 @@ Table {
   size 0.6 0.5 0.5
 }
 DEF TARGET_BOX Solid {
-  translation 0.45082452335227297 4.253221596507626e-17 0.41995762079999993
-  rotation -0.06863357507571267 0.2255777451234535 0.971804565371734 4.85511831983431e-16
+  translation 0.451 0 0.41
   children [
     Shape {
       appearance Appearance {
@@ -103,17 +102,15 @@ DEF TARGET_BOX Solid {
         }
       }
       geometry Box {
-        size 0.06 0.06 0.06
+        size 0.04 0.04 0.04
       }
     }
   ]
   name "target_box"
   boundingObject Box {
-    size 0.06 0.06 0.06
+    size 0.04 0.04 0.04
   }
   physics Physics {
     density 500
   }
-  linearVelocity -6.734257560307581e-17 -3.014081807143618e-18 3.801419660019583e-16
-  angularVelocity -5.62178904251736e-16 -3.1474885841127544e-15 8.699639472088721e-17
 }

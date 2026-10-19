@@ -3,6 +3,8 @@ Plotter — provided, do not modify
 ====================================
 Reads all CSV files from logs/ and plots error over time for each run.
 Run after completing all three Task 2 runs (P_only, PD, PID).
+The data_logger already does this on Ctrl+C; use this to regenerate.
+Delete old CSVs in logs/ before a new tuning session.
 
 Usage:
   ros2 run arm_control_pkg plotter
@@ -11,8 +13,11 @@ Usage:
 import os
 import csv
 import glob
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
+import matplotlib
+
+matplotlib.use("Agg")  # no display needed — saves to file only
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.gridspec as gridspec  # noqa: E402
 
 
 def main(args=None):
@@ -41,7 +46,8 @@ def main(args=None):
     labels, rms_values = [], []
 
     for filepath in files:
-        label = os.path.basename(filepath).split("_")[0]
+        # "P_only_1714740000.csv" -> "P_only"
+        label = os.path.basename(filepath).rsplit("_", 1)[0]
         times, errors = [], []
 
         with open(filepath) as f:
@@ -49,6 +55,10 @@ def main(args=None):
             for row in reader:
                 times.append(float(row["time_s"]))
                 errors.append(float(row["error_rad"]))
+
+        if not errors:
+            print(f"Skipping empty log: {filepath}")
+            continue
 
         ax_err.plot(times, errors, label=label, linewidth=1.5)
 
@@ -66,7 +76,8 @@ def main(args=None):
     ax_err.legend()
     ax_err.grid(True, alpha=0.3)
 
-    colors = ["#e74c3c", "#e67e22", "#2ecc71"][: len(labels)]
+    colors = ["#e74c3c", "#e67e22", "#2ecc71", "#3498db", "#9b59b6"]
+    colors = [colors[i % len(colors)] for i in range(len(labels))]
     ax_rms.bar(labels, rms_values, color=colors, edgecolor="black", linewidth=0.8)
     ax_rms.set_ylabel("RMS error (rad)")
     ax_rms.set_title("Tracking quality\n(lower = better)")

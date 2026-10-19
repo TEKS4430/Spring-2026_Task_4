@@ -19,16 +19,16 @@ Setup is familiar from previous assignments:
 ### 1. First-time setup
 
 ```bash
-cp .env.example .env
+cp env.example .env
 # Linux:        uncomment NETWORK_MODE=host and WEBOTS_HOST=localhost
-# Mac/Windows:  leave as-is
+# Mac/Windows:  uncomment NETWORK_MODE=bridge and WEBOTS_HOST=host.docker.internal
 
 docker compose build   # ~5 min first time
 ```
 
 ### 2. Open Webots
 
-1. Open Webots R2025a → **File → Open World** → `worlds/arm_assignment.wbt`
+1. Open Webots R2025a → **File → Open World** → `src/worlds/arm_assignment.wbt`
 2. Press **Play ▶** before launching the driver
 
 > ⚠️ If you see `"retrying for another 50 seconds..."` — just press Play in Webots.  
@@ -79,7 +79,7 @@ ros2 launch arm_control_pkg arm.launch.py
 ros2 run arm_control_pkg task1_fk
 ```
 
-Edit `joint_index` and `target_angle` at the bottom of `task1_fk_explorer.py`, then rebuild and run again for each experiment:
+Edit `joint_index` and `target_angle` at the bottom of `task1_fk_explorer.py`, then rebuild and run again for each experiment. Each run first sends **all joints to 0.0 rad**, waits 3 s, prints `Start EE`, and only then moves the chosen joint — so every row starts from the same pose.
 
 ```bash
 # After editing on your host:
@@ -103,9 +103,10 @@ Fill in this table in your report (run the node once per row):
 ### Hints
 
 - **Wait for values to stop changing** before recording — the arm takes 1–2 seconds to settle after a command.
-- **What the axes mean:** `x` is forward (away from the robot body), `y` is sideways, `z` is up. All values are relative to the arm's base joint.
-- **Which joints do what:** Joint 1 rotates the base (changes x and y, z stays the same). Joints 2 and 3 control how far forward and how high the arm reaches. Joints 4 and 5 control wrist angle.
-- **The workspace question (Task 1b):** Think about what the arm is physically attached to, and what that means about positions directly below or behind it.
+- **What the axes mean:** `x` is forward (away from the robot body), `y` is sideways (left), `z` is up. All values are relative to the arm's base (where it is mounted on the robot).
+- **Zero pose:** with all joints at 0.0 rad the arm points **straight up**.
+- **Which joints do what:** Joint 1 rotates the base (changes x and y, z stays the same). Joints 2, 3 and 4 tilt the arm in its vertical plane: **negative angles lean it forward**, positive angles lean it backward over the robot. Joint 5 rolls the wrist and does not move the EE point.
+- **Task 1b — answer in your report:** *Why can't the arm reach (0.0, 0.0, 0.05) regardless of joint angles?* Think about what the arm is physically attached to, and what that means about positions directly below or behind it.
 
 ---
 
@@ -113,11 +114,16 @@ Fill in this table in your report (run the node once per row):
 
 **Learning goal:** Implement and tune a PID controller. Observe how each term affects tracking.
 
-Joint 2 follows a continuously moving sine wave target. Your controller must keep the arm tracking it. Watch the arm in Webots — tracking visibly improves with each term you add.
+Joint 2 follows a continuously moving sine wave target (centre 0.5 rad, amplitude 0.3 rad, period 20 s). Your controller outputs a **joint velocity** (rad/s) on `/youBot/arm_joint_2/velocity`. The joint only moves when your controller tells it to — with `correction = 0` the arm stays still while the target moves away.
+
+Each run first moves joint 2 to 0.5 rad (3 s), then starts tracking, so all runs start from the same point.
 
 ### Workflow — one run at a time
 
 ```bash
+# Before your first run (inside the container): clear old logs
+rm -f /ros2_ws/src/arm_control_pkg/logs/*.csv
+
 # Terminal 1 — driver (keep open across all runs)
 ros2 launch arm_control_pkg arm.launch.py
 
@@ -144,29 +150,29 @@ Open `task2_pid_joint.py` and find the TODO section in `_control_loop`. Implemen
 ```python
 correction = Kp * error
 ```
-The arm will start following the sine wave but lag behind the target.
+The arm follows the sine wave but lags behind it. Try several `Kp` values: the lag shrinks as `Kp` grows, until the arm starts to oscillate.
 
 **Task 2b — Add D term** (keep your Kp):
 ```python
 derivative = (error - self.prev_error) / self.dt
 correction = Kp * error + Kd * derivative
 ```
-The lag should reduce. Watch the arm in Webots become more responsive.
+At moderate `Kp` the D term changes little. Its job is damping: push `Kp` close to where P-only oscillated and see the D term calm it down.
 
 **Task 2c — Add I term** (keep your Kp and Kd):
 ```python
 self.integral += error * self.dt
 correction = Kp * error + Kd * derivative + Ki * self.integral
 ```
-Any remaining constant offset between arm and target should disappear.
+The remaining lag should mostly disappear.
 
 ### Hints
 
-- **With `correction = 0.0`** (before you implement anything), the arm sends `target + 0 = target` — it will move, but it is not using any feedback. The error will be non-zero and visible in the log. This is expected.
-- **Starting gain values:** `Kp = 1.0` is a good starting point. If the arm barely moves, increase it. If it oscillates wildly, decrease it.
-- **Keep Kd small** (0.01–0.05). The D term amplifies sensor noise — too large and the arm will vibrate rather than dampen.
-- **Keep Ki small** (0.01–0.1). The I term accumulates over time — too large causes slow growing oscillations.
-- **Each run must be independent** — stop Terminal 2 (controller) and Terminal 3 (logger) with Ctrl+C before starting the next run. Use a different `label` each time so the plot shows all three curves.
+- **With `correction = 0.0`** (before you implement anything), the arm does not move at all and the error grows to the full amplitude of the wave. This is expected.
+- **Starting gain values:** `Kp = 2.0` is a good start. Larger `Kp` reduces lag; if the arm starts to shake or oscillate, back off.
+- **Keep Kd small** (0.05–0.3). The D term amplifies sensor noise — too large and the arm will vibrate rather than dampen.
+- **Ki** in the range 0.5–2.0 works well. Too large causes slow, growing oscillations.
+- **Each run must be independent** — stop Terminal 2 (controller) and Terminal 3 (logger) with Ctrl+C before starting the next run. Use a different `label` each time so the plot shows all three curves. If you redo a run, delete its old CSV first.
 
 ---
 
@@ -222,21 +228,21 @@ Edit `DWELL_TIME` at the top of the file:
 
 | Run | Setting | Expected behaviour |
 |-----|---------|-------------------|
-| 1 | `DWELL_TIME = 0.0` | Arm skips states before finishing motion |
-| 2 | `DWELL_TIME = 1.5` | Each state completes before the next begins |
+| 1 | `DWELL_TIME = 0.0` | Each state ends as soon as the joints are within the threshold, while the arm is still moving. GRASP and CLOSE_GRIP use the same angles, so CLOSE_GRIP ends instantly and the arm lifts before the gripper closes — the box stays on the table. |
+| 2 | `DWELL_TIME = 1.5` | Each state settles before the next begins; the gripper closes and the box is lifted. |
 
 Rebuild between runs: `cb && src`
 
 ### Adjusting STATE_ANGLES for your setup
 
-The provided `STATE_ANGLES` are approximate. **The arm may not reach the box exactly** — this is normal and part of the task. To improve the arm's reach:
+The provided `STATE_ANGLES` reach the box in the provided world, with the gripper angled about 30° below horizontal (the box is too high and too far for a straight-down grasp). Small differences in the simulation may still make the gripper miss slightly — this is normal and part of the task. To adjust:
 
 1. **Use Task 1's FK explorer** to find angles that position the EE near your box:
    - Run `task1_fk` with different joint angles
    - Look at the EE `x` and `z` values — aim to match the box position visually
-   - Joint 2 (shoulder, `arm_joint_2`) primarily controls height (z)
-   - Joint 3 (elbow, `arm_joint_3`) primarily controls forward reach (x) — use negative values to extend forward
-   - Joint 4 (wrist, `arm_joint_4`) fine-tunes the approach angle
+   - Joints 2, 3 and 4 all tilt the arm forward when **negative** (0 = straight up)
+   - Joint 2 (shoulder) moves the whole arm; joint 3 (elbow) bends the upper part
+   - Joint 4 (wrist) sets the gripper angle — more negative points it further down
 
 2. **Update `STATE_ANGLES`** in `task3_pick_place.py` with your found angles:
    - `APPROACH` should position the EE a few centimetres **above** the box
@@ -245,7 +251,7 @@ The provided `STATE_ANGLES` are approximate. **The arm may not reach the box exa
 
 3. **You can also move the box** in the Webots Scene Tree to a position that's easier to reach — click the TARGET_BOX node, change its `translation` field.
 
-> The arm's maximum forward reach is approximately **0.46 m** from its base joint (which is offset ~0.16 m from the robot centre). The box must be within this range.
+> The arm's maximum reach is approximately **0.46 m** from its shoulder joint, which sits ~0.19 m in front of the robot centre and ~0.25 m above the floor. The box must be within this range.
 
 ---
 
@@ -258,6 +264,9 @@ The provided `STATE_ANGLES` are approximate. **The arm may not reach the box exa
 
 **`angle=0.000` never changes in task2**  
 → Driver must be running in a separate terminal. `task2_pid` alone does nothing — it needs the driver running in Terminal 1 simultaneously.
+
+**Arm holds still in Task 2 after the first 3 s**  
+→ `correction` is still `0.0`. Implement the P term first.
 
 **Arm doesn't move in Task 3 / stuck on HOME forever**  
 → `_send_joint_commands` is not implemented yet (it's `pass`). Implement it first — without it, no commands are published and the arm never moves.
@@ -298,7 +307,7 @@ Include insight on:
 
 Create a video covering Parts A and B:
 - Demonstrate the environment running (Webots + ROS 2 launch).
-- Show the robot navigating waypoints and stopping for an obstacle.
+- Show the FK explorer (Task 1), the PID tracking plot (Task 2) and the pick-and-place sequence with both DWELL_TIME settings (Task 3).
 - Explain how you used AI in the assignment.
 
 [See more detailed instructions from Task 2](https://github.com/TEKS4430/Spring-2026_Task_2/tree/main#returning-instructions)

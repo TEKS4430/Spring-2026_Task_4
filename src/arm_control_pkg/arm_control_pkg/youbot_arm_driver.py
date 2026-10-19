@@ -6,13 +6,23 @@ Device names come from the Youbot.proto file:
   Motors:  arm1, arm2, arm3, arm4, arm5
   Sensors: arm1sensor, arm2sensor, arm3sensor, arm4sensor, arm5sensor
   Gripper: finger::left, finger::right
+
+Topics:
+  Sub  /youBot/arm_joint_N/position   Float64  target angle (rad)
+  Sub  /youBot/arm_joint_N/velocity   Float64  target speed (rad/s), Task 2
+  Sub  /youBot/gripper_{left,right}/position  Float64  finger opening (m)
+  Pub  /youBot/arm_joint_N/sensor     Float64  measured angle (rad)
+  Pub  /youBot/end_effector_position  Point    finger frame in the arm base
+                                               frame (see kinematics.py)
 """
 
 import sys
-import math
+import time
 import rclpy
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Point
+
+from arm_control_pkg.kinematics import JOINT_LIMITS, forward_kinematics
 
 
 def _log(msg):
@@ -20,14 +30,6 @@ def _log(msg):
     sys.stderr.flush()
 
 
-# Exact limits from Youbot.proto
-JOINT_LIMITS = [
-    (-2.9496, 2.9496),  # arm1 — base rotation
-    (-1.13446, 1.5708),  # arm2 — shoulder
-    (-2.63545, 2.54818),  # arm3 — elbow
-    (-1.78024, 1.78024),  # arm4 — wrist pitch
-    (-2.92343, 2.92343),  # arm5 — wrist roll
-]
 GRIPPER_LIMIT = (0.0, 0.0245)
 
 # Device names exactly as defined in Youbot.proto
@@ -42,12 +44,9 @@ ARM_SENSOR_NAMES = [
 GRIP_MOTOR_NAMES = ["finger::left", "finger::right"]
 GRIP_SENSOR_NAMES = ["finger::leftsensor", "finger::rightsensor"]
 
-# Link lengths for approximate FK (metres, from PROTO geometry)
-L1 = 0.077 + 0.07  # arm1 anchor z + arm2 anchor z
-L2 = 0.155  # arm2→arm3
-L3 = 0.135  # arm3→arm4
-L4 = 0.081  # arm4→arm5
-L5 = 0.09  # arm5→finger tip
+# Velocity mode (used by Task 2): if no velocity command arrives for this
+# long, the joint is stopped so it never keeps drifting after Ctrl+C.
+VELOCITY_TIMEOUT = 0.3  # s
 
 
 class YouBotArmDriver:
@@ -65,6 +64,9 @@ class YouBotArmDriver:
         self._arm_sensor_pubs = []
         self._ee_pub = None
         self._arm_targets = [0.0, 0.0, 0.0, 0.0, 0.0]
+        # Per joint: None = position mode, otherwise (velocity, stamp)
+        self._arm_vel_cmds = [None] * 5
+        self._max_vel = [1.5708] * 5
         self._grip_target = GRIPPER_LIMIT[1]
 
         # Webots robot handle
@@ -84,6 +86,7 @@ class YouBotArmDriver:
                     _log(f"ERROR: motor '{name}' not found")
                     return
                 motor.setPosition(self._arm_targets[i])
+                self._max_vel[i] = motor.getMaxVelocity()
                 self._arm_motors.append(motor)
                 _log(f"motor '{name}' OK")
             except Exception as e:
@@ -138,6 +141,16 @@ class YouBotArmDriver:
                 10,
             )
 
+        # Arm velocity subscribers (Task 2). A message switches that joint
+        # to velocity mode; a later /position message switches it back.
+        for i in range(5):
+            self._node.create_subscription(
+                Float64,
+                f"/youBot/arm_joint_{i + 1}/velocity",
+                lambda msg, idx=i: self._arm_vel_cb(msg, idx),
+                10,
+            )
+
         # Gripper subscribers
         for side in ["left", "right"]:
             self._node.create_subscription(
@@ -167,6 +180,11 @@ class YouBotArmDriver:
     def _arm_cmd_cb(self, msg, idx):
         lo, hi = JOINT_LIMITS[idx]
         self._arm_targets[idx] = max(lo, min(hi, msg.data))
+        self._arm_vel_cmds[idx] = None
+
+    def _arm_vel_cb(self, msg, idx):
+        vmax = self._max_vel[idx]
+        self._arm_vel_cmds[idx] = (max(-vmax, min(vmax, msg.data)), time.time())
 
     def _grip_cb(self, msg):
         lo, hi = GRIPPER_LIMIT
@@ -180,33 +198,39 @@ class YouBotArmDriver:
 
         rclpy.spin_once(self._node, timeout_sec=0)
 
+        angles = []
+        for sensor in self._arm_sensors:
+            angles.append(sensor.getValue() if sensor else 0.0)
+
+        now = time.time()
         for i, motor in enumerate(self._arm_motors):
-            motor.setPosition(self._arm_targets[i])
+            cmd = self._arm_vel_cmds[i]
+            if cmd is None:
+                # Position mode (Tasks 1 and 3)
+                motor.setVelocity(self._max_vel[i])
+                motor.setPosition(self._arm_targets[i])
+                continue
+            # Velocity mode (Task 2)
+            vel, stamp = cmd
+            lo, hi = JOINT_LIMITS[i]
+            if now - stamp > VELOCITY_TIMEOUT:
+                vel = 0.0  # controller stopped: hold still
+            if (angles[i] <= lo and vel < 0) or (angles[i] >= hi and vel > 0):
+                vel = 0.0  # never drive into a joint limit
+            # Webots velocity control: infinite target position, signed speed
+            motor.setPosition(float("inf"))
+            motor.setVelocity(vel)
+            self._arm_targets[i] = angles[i]  # hold here if mode switches back
 
         for motor in self._gripper_motors:
             motor.setPosition(self._grip_target)
 
-        angles = []
-        for i, sensor in enumerate(self._arm_sensors):
-            val = sensor.getValue() if sensor else 0.0
-            angles.append(val)
+        for i, val in enumerate(angles):
             msg = Float64()
             msg.data = val
             self._arm_sensor_pubs[i].publish(msg)
 
-        self._ee_pub.publish(self._fk(angles))
-
-    # ── Approximate FK ────────────────────────────────────────────────
-
-    def _fk(self, angles):
-        q1, q2, q3, q4 = angles[0], angles[1], angles[2], angles[3]
-        a2 = q2
-        a3 = q2 + q3
-        a4 = q2 + q3 + q4
-        r = L2 * math.cos(a2) + L3 * math.cos(a3) + (L4 + L5) * math.cos(a4)
-        z = L1 + L2 * math.sin(a2) + L3 * math.sin(a3) + (L4 + L5) * math.sin(a4)
+        x, y, z = forward_kinematics(angles)
         pt = Point()
-        pt.x = round(r * math.cos(q1), 4)
-        pt.y = round(r * math.sin(q1), 4)
-        pt.z = round(z, 4)
-        return pt
+        pt.x, pt.y, pt.z = round(x, 4), round(y, 4), round(z, 4)
+        self._ee_pub.publish(pt)

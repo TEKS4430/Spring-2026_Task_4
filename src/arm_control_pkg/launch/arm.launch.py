@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-arm.launch.py — Assignment 2: Arm Control
+arm.launch.py — Assignment 4: Arm Control
 ==========================================
 Prerequisites:
     - Webots is open with worlds/arm_assignment.wbt loaded

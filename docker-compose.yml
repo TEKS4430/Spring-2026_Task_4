@@ -1,5 +1,5 @@
 # ============================================================
-# docker-compose.yml — Assignment 2: Arm Control
+# docker-compose.yml — Assignment 4: Arm Control
 # Webots runs natively on host | ROS2 runs in this container
 # ============================================================
 
@@ -18,7 +18,7 @@ services:
     # ── Volumes ─────────────────────────────────────────────
     volumes:
       - ./src:/ros2_ws/src
-      - ./worlds:/ros2_ws/worlds
+      - ./src/worlds:/ros2_ws/worlds
       - ros2_a2_build:/ros2_ws/build
       - ros2_a2_install:/ros2_ws/install
       - ros2_a2_log:/ros2_ws/log

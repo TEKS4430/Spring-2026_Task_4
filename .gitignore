@@ -3,9 +3,12 @@ build/
 install/
 log/
 
+# Task 2 logs and plots — generated per student
+src/arm_control_pkg/logs/
+
 # Local environment config — each student sets their own
 .env
-.patch
+*.patch
 
 # Python
 __pycache__/
