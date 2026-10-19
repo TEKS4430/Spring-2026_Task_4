@@ -5,6 +5,7 @@ log/
 
 # Local environment config — each student sets their own
 .env
+.patch
 
 # Python
 __pycache__/
